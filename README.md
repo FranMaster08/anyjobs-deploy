@@ -28,11 +28,10 @@ Si **no** usas `ANYJOBS_DEPLOY_ROOT`, el script cae en `/opt/anyjobs/<staging|pr
 2. `docker login ghcr.io` si las imágenes GHCR son privadas.
 3. Servicios en compose con nombres **`anyjobs-back`** y **`anyjobs-front`**.
 
-## Error `missing server host` (appleboy/ssh-action)
+## Error `missing server host` o “Faltan VPS_HOST…”
 
-El secret **`VPS_HOST`** llega vacío al job. Revisa:
+Los workflows leen **`VPS_HOST`**, **`VPS_USER`** y **`VPS_SSH_PRIVATE_KEY`** desde **Repository secrets** (Settings → Secrets and variables → Actions → **Secrets** del repositorio, no solo del Environment).
 
-1. **Settings → Secrets and variables → Actions** del repo: existen **`VPS_HOST`**, **`VPS_USER`**, **`VPS_SSH_PRIVATE_KEY`**.
-2. Si el workflow usa **Environments** `staging` / `production`, esos mismos nombres deben estar definidos **en cada Environment** (Secrets del environment), **o** no debes tener en el environment una clave con el mismo nombre y valor vacío (puede **sustituir** al secret del repositorio y dejar el host vacío).
+El job de deploy **no** usa `environment:` para no mezclar con secrets de Environment vacíos que tapen los del repo.
 
 Este repositorio no contiene código de aplicación; solo infraestructura de despliegue.
