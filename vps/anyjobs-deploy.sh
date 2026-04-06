@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
-# Instalar en el VPS EXACTAMENTE como: /usr/local/sbin/anyjobs-deploy
-# (los workflows de GitHub Actions invocan esa ruta; chmod +x, ej. chmod 750, root:deploy).
-# El usuario de despliegue debe poder ejecutar docker compose en los directorios de cada entorno.
+# Copiar al VPS (p. ej. ~/entorno/anyjobs-deploy) y chmod +x.
+# Los workflows por defecto: bash "$HOME/entorno/anyjobs-deploy" (secret VPS_DEPLOY_SCRIPT para otra ruta).
+# Directorio del compose: variable ANYJOBS_DEPLOY_ROOT (ruta absoluta con docker-compose.yml y .env).
+#   Si NO está definida: BASE=/opt/anyjobs/<staging|production>.
+# En Actions suele exportarse ANYJOBS_DEPLOY_ROOT; para un solo stack en todo el VPS, define el secret
+# ANYJOBS_DEPLOY_ROOT igual en staging y production (p. ej. /root/entorno).
+# El usuario de despliegue debe poder ejecutar docker compose en BASE.
 # Si GHCR es privado: en el VPS, como ese usuario, ejecutar una vez:
 #   echo TOKEN | docker login ghcr.io -u USUARIO --password-stdin
 # (TOKEN = PAT con scope read:packages, mínimo privilegio.)
@@ -41,7 +45,7 @@ if [[ ! "$IMAGE" =~ ^ghcr.io/[a-z0-9._/-]+:(sha-[a-f0-9]{7,40}|develop|main)$ ]]
   exit 2
 fi
 
-BASE="/opt/anyjobs/${ENV_NAME}"
+BASE="${ANYJOBS_DEPLOY_ROOT:-/opt/anyjobs/${ENV_NAME}}"
 if [[ ! -d "$BASE" ]]; then
   echo "Directorio de entorno inexistente: $BASE" >&2
   exit 2
