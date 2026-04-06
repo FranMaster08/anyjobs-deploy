@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Sube VPS_* a los GitHub Environments staging y production en anyjobs-backend y anyjobs-front.
 # Requiere: gh autenticado (repo). GitHub no expone valores de secrets ya guardados: hace falta
-# un .env local con los valores (o el mismo contenido que pegaste en Repository secrets).
+# un .env local puntual. Tras usar: chmod 600 vps-secrets.env; borra el archivo (rm) o guárdalo
+# solo en un gestor de secretos, no en el repo.
 #
 # Uso:
 #   ./scripts/sync-vps-secrets-to-github-environments.sh /ruta/vps-secrets.env [/ruta/clave_ssh]

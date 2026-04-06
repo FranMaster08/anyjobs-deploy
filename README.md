@@ -37,7 +37,7 @@ Define en cada repositorio, en **Settings → Environments → staging / product
 - **`VPS_HOST`**, **`VPS_USER`**, **`VPS_SSH_PRIVATE_KEY`**
 - Opcionales: **`VPS_SSH_PORT`**, **`VPS_DEPLOY_SCRIPT`**, **`ANYJOBS_DEPLOY_ROOT`**
 
-Si un nombre no existe en el Environment, GitHub sigue pudiendo resolver el secret a nivel **repositorio** (mismo nombre). No crees secrets de entorno vacíos: anulan el valor del repo.
+No crees secrets de entorno vacíos (anulan un valor válido del repositorio con el mismo nombre). Para despliegues, prioriza secrets solo en **Environment** y evita duplicar credenciales en texto plano local más tiempo del necesario.
 
 ### Copiar valores al entorno desde tu máquina
 
