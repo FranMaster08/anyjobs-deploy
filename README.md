@@ -28,10 +28,29 @@ Si **no** usas `ANYJOBS_DEPLOY_ROOT`, el script cae en `/opt/anyjobs/<staging|pr
 2. `docker login ghcr.io` si las imágenes GHCR son privadas.
 3. Servicios en compose con nombres **`anyjobs-back`** y **`anyjobs-front`**.
 
-## Error `missing server host` o “Faltan VPS_HOST…”
+## Secrets en GitHub (VPS)
 
-Los workflows leen **`VPS_HOST`**, **`VPS_USER`** y **`VPS_SSH_PRIVATE_KEY`** desde **Repository secrets** (Settings → Secrets and variables → Actions → **Secrets** del repositorio, no solo del Environment).
+Los workflows de **anyjobs-backend** y **anyjobs-front** usan el job `deploy` con **Environment** `staging` (rama `develop`) y `production` (rama `main`).
 
-El job de deploy **no** usa `environment:` para no mezclar con secrets de Environment vacíos que tapen los del repo.
+Define en cada repositorio, en **Settings → Environments → staging / production → Environment secrets**, como mínimo:
+
+- **`VPS_HOST`**, **`VPS_USER`**, **`VPS_SSH_PRIVATE_KEY`**
+- Opcionales: **`VPS_SSH_PORT`**, **`VPS_DEPLOY_SCRIPT`**, **`ANYJOBS_DEPLOY_ROOT`**
+
+Si un nombre no existe en el Environment, GitHub sigue pudiendo resolver el secret a nivel **repositorio** (mismo nombre). No crees secrets de entorno vacíos: anulan el valor del repo.
+
+### Copiar valores al entorno desde tu máquina
+
+GitHub **no** permite leer de vuelta el valor de un secret. Para subir los mismos valores a `staging` y `production` en ambos repos con la CLI:
+
+```bash
+cd /ruta/anyjobs-deploy
+cp scripts/vps-secrets.env.example scripts/vps-secrets.env
+# edita scripts/vps-secrets.env (host, usuario, opcionales)
+chmod +x scripts/sync-vps-secrets-to-github-environments.sh
+./scripts/sync-vps-secrets-to-github-environments.sh scripts/vps-secrets.env ~/.ssh/tu_clave_vps
+```
+
+(`vps-secrets.env` está en `.gitignore`.)
 
 Este repositorio no contiene código de aplicación; solo infraestructura de despliegue.

@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.*.example
+scripts/vps-secrets.env
 *.bak
 *.pem
 *.key
