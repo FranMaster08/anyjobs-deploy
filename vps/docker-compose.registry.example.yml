@@ -1,0 +1,62 @@
+# Copiar al VPS como docker-compose.yml dentro de /opt/anyjobs/staging o production.
+# Ajustar puertos, volúmenes y env_file según el entorno. Las imágenes vienen de GHCR (.env).
+
+# En producción usar otro nombre de proyecto, p. ej. anyjobs_prd, para no chocar con staging.
+name: anyjobs_stg
+
+services:
+  anyjobs-postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "${ANYJOBS_DB_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - anyjobs_pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  anyjobs-back:
+    image: ${ANYJOBS_BACK_IMAGE}
+    env_file:
+      - .env.backend
+    environment:
+      APP_PORT: 3000
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      DB_HOST: anyjobs-postgres
+      DB_PORT: 5432
+    ports:
+      - "${ANYJOBS_BACK_PORT:-3000}:3000"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"require('http').get('http://127.0.0.1:3000/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1));\"",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    depends_on:
+      anyjobs-postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Imagen prod del frontend: nginx escucha en 8080 (nginx-unprivileged)
+  anyjobs-front:
+    image: ${ANYJOBS_FRONT_IMAGE}
+    ports:
+      - "${ANYJOBS_FRONT_PORT:-4200}:8080"
+    depends_on:
+      anyjobs-back:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  anyjobs_pgdata:

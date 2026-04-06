@@ -1,0 +1,8 @@
+# Nunca subir secretos reales
+.env
+.env.*
+!.env.*.example
+*.bak
+*.pem
+*.key
+.DS_Store
