@@ -11,6 +11,17 @@
 # (TOKEN = PAT con scope read:packages, mínimo privilegio.)
 set -euo pipefail
 
+compose() {
+  if docker compose version >/dev/null 2>&1; then
+    docker compose "$@"
+  elif command -v docker-compose >/dev/null 2>&1; then
+    docker-compose "$@"
+  else
+    echo "anyjobs-deploy: no hay 'docker compose' (plugin) ni 'docker-compose'. Instala Docker Engine + plugin compose." >&2
+    exit 1
+  fi
+}
+
 ENV_NAME=""
 SERVICE=""
 IMAGE=""
@@ -53,22 +64,35 @@ fi
 
 cd "$BASE"
 
+if [[ ! -f .env ]]; then
+  echo "anyjobs-deploy: no existe .env en $BASE" >&2
+  exit 2
+fi
+
 case "$SERVICE" in
   anyjobs-back)
-    if ! grep -q '^ANYJOBS_BACK_IMAGE=' .env 2>/dev/null; then
-      echo "Falta ANYJOBS_BACK_IMAGE en .env" >&2
+    if ! grep -qE '^[[:space:]]*ANYJOBS_BACK_IMAGE=' .env 2>/dev/null; then
+      echo "anyjobs-deploy: falta línea ANYJOBS_BACK_IMAGE= en .env (en $BASE)" >&2
       exit 2
     fi
-    sed -i.bak "s|^ANYJOBS_BACK_IMAGE=.*|ANYJOBS_BACK_IMAGE=${IMAGE}|" .env
+    sed -i.bak "s|^\([[:space:]]*ANYJOBS_BACK_IMAGE=\).*$|\1${IMAGE}|" .env
     ;;
   anyjobs-front)
-    if ! grep -q '^ANYJOBS_FRONT_IMAGE=' .env 2>/dev/null; then
-      echo "Falta ANYJOBS_FRONT_IMAGE en .env" >&2
+    if ! grep -qE '^[[:space:]]*ANYJOBS_FRONT_IMAGE=' .env 2>/dev/null; then
+      echo "anyjobs-deploy: falta línea ANYJOBS_FRONT_IMAGE= en .env (en $BASE)" >&2
       exit 2
     fi
-    sed -i.bak "s|^ANYJOBS_FRONT_IMAGE=.*|ANYJOBS_FRONT_IMAGE=${IMAGE}|" .env
+    sed -i.bak "s|^\([[:space:]]*ANYJOBS_FRONT_IMAGE=\).*$|\1${IMAGE}|" .env
     ;;
 esac
 
-docker compose --env-file .env pull "$SERVICE"
-docker compose --env-file .env up -d --no-deps --force-recreate "$SERVICE"
+echo "anyjobs-deploy: pull $SERVICE ($IMAGE) en $BASE" >&2
+if ! compose --env-file .env pull "$SERVICE"; then
+  echo "anyjobs-deploy: pull falló. Si GHCR es privado: docker login ghcr.io (PAT read:packages)." >&2
+  exit 1
+fi
+if ! compose --env-file .env up -d --no-deps --force-recreate "$SERVICE"; then
+  echo "anyjobs-deploy: docker compose up falló." >&2
+  exit 1
+fi
+echo "anyjobs-deploy: OK $SERVICE" >&2
