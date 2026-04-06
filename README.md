@@ -14,13 +14,11 @@ Plantillas y script para desplegar **Anyjobs** en un VPS con Docker Compose y Gi
 ## Rutas por defecto (workflows front/back)
 
 - Script: `bash "$HOME/entorno/anyjobs-deploy"` (secret **`VPS_DEPLOY_SCRIPT`** para otra ruta).
-- Directorio del compose: si no defines el secret **`ANYJOBS_DEPLOY_ROOT`**:
-  - staging → `$HOME/entorno-staging`
-  - production → `$HOME/entorno-production`
+- Directorio del compose sin secret **`ANYJOBS_DEPLOY_ROOT`**:
+  1. Si existe `$HOME/entorno-staging` o `$HOME/entorno-production` (según el job), se usa esa carpeta.
+  2. Si no, se usa **`$HOME/entorno`** (un solo stack para staging y production).
 
-**Un solo stack** (misma carpeta para ambas ramas): en GitHub, en los environments `staging` y `production`, define **`ANYJOBS_DEPLOY_ROOT`** con la misma ruta absoluta (p. ej. `/root/entorno`).
-
-**Atajo** (mismo contenido en dos rutas): en el VPS, `ln -s ~/entorno ~/entorno-staging` y `ln -s ~/entorno ~/entorno-production` (solo tiene sentido si aceptas un único `.env`; no separa datos entre entornos).
+Para forzar siempre una ruta concreta, define el secret **`ANYJOBS_DEPLOY_ROOT`** en cada environment de GitHub.
 
 Si **no** usas `ANYJOBS_DEPLOY_ROOT`, el script cae en `/opt/anyjobs/<staging|production>` (layout clásico).
 
